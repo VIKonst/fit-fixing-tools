@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Polyline, useMap } from 'react-leaflet';
 import { useTranslation } from 'react-i18next';
 import type { LatLngBoundsExpression, LatLngTuple } from 'leaflet';
@@ -19,6 +19,8 @@ interface MapPreviewProps {
 
 export function MapPreview({ gpxTrack, generatedTrack }: MapPreviewProps) {
   const { t } = useTranslation();
+  const [showGpx, setShowGpx] = useState(true);
+  const [showGenerated, setShowGenerated] = useState(true);
 
   const gpxPositions: LatLngTuple[] = useMemo(
     () => gpxTrack.map((p) => [p.lat, p.lon]),
@@ -64,39 +66,49 @@ export function MapPreview({ gpxTrack, generatedTrack }: MapPreviewProps) {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <Polyline
-            positions={gpxPositions}
-            pathOptions={{
-              color: '#3b82f6',
-              weight: 4,
-              opacity: 0.7,
-              dashArray: '10, 8',
-            }}
-          />
-          <Polyline
-            positions={genPositions}
-            pathOptions={{
-              color: '#ef4444',
-              weight: 3,
-              opacity: 0.9,
-            }}
-          />
+          {showGpx && (
+            <Polyline
+              positions={gpxPositions}
+              pathOptions={{
+                color: '#3b82f6',
+                weight: 4,
+                opacity: 0.7,
+                dashArray: '10, 8',
+              }}
+            />
+          )}
+          {showGenerated && (
+            <Polyline
+              positions={genPositions}
+              pathOptions={{
+                color: '#ef4444',
+                weight: 3,
+                opacity: 0.9,
+              }}
+            />
+          )}
           <FitBounds bounds={bounds} />
         </MapContainer>
       </div>
-      <div className="flex gap-6 mt-2 text-sm">
-        <div className="flex items-center gap-2">
-          <span className="w-6 h-0.5 bg-blue-500 inline-block border-t-2 border-dashed border-blue-500" />
+      <div className="flex gap-4 mt-2 text-sm">
+        <button
+          onClick={() => setShowGpx((v) => !v)}
+          className={`flex items-center gap-2 px-2 py-1 rounded transition-opacity ${showGpx ? 'opacity-100' : 'opacity-40'}`}
+        >
+          <span className="w-6 inline-block border-t-2 border-dashed border-blue-500" />
           <span className="text-gray-600 dark:text-gray-400">
             {t('map.legend.gpx')}
           </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-6 h-0.5 bg-red-500 inline-block" />
+        </button>
+        <button
+          onClick={() => setShowGenerated((v) => !v)}
+          className={`flex items-center gap-2 px-2 py-1 rounded transition-opacity ${showGenerated ? 'opacity-100' : 'opacity-40'}`}
+        >
+          <span className="w-6 inline-block border-t-2 border-red-500" />
           <span className="text-gray-600 dark:text-gray-400">
             {t('map.legend.generated')}
           </span>
-        </div>
+        </button>
       </div>
     </div>
   );
