@@ -4,5 +4,5 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: process.env.GITHUB_PAGES === 'true' ? '/FitGpsFix/' : '/',
+  base: process.env.GITHUB_PAGES === 'true' ? '/fit-fixing-tools/' : '/',
 })
