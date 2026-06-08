@@ -8,6 +8,7 @@ import { MapPreview } from './components/MapPreview';
 import { TrackStats } from './components/TrackStats';
 import { DownloadButton } from './components/DownloadButton';
 import { ErrorDisplay } from './components/ErrorDisplay';
+import { HowToUse } from './components/HowToUse';
 
 function AppContent() {
   const { t } = useTranslation();
@@ -16,6 +17,8 @@ function AppContent() {
 
   return (
     <Layout>
+      <HowToUse />
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FitFileInput />
         <GpxFileInput />
