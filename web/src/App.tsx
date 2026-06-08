@@ -1,14 +1,18 @@
+import { lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppProvider, useAppState, useAppDispatch } from './context/AppContext';
 import { Layout } from './components/Layout';
 import { FitFileInput } from './components/FitFileInput';
 import { GpxFileInput } from './components/GpxFileInput';
 import { ProcessButton } from './components/ProcessButton';
-import { MapPreview } from './components/MapPreview';
 import { TrackStats } from './components/TrackStats';
 import { DownloadButton } from './components/DownloadButton';
 import { ErrorDisplay } from './components/ErrorDisplay';
 import { HowToUse } from './components/HowToUse';
+
+const MapPreview = lazy(() =>
+  import('./components/MapPreview').then((m) => ({ default: m.MapPreview })),
+);
 
 function AppContent() {
   const { t } = useTranslation();
@@ -42,10 +46,12 @@ function AppContent() {
 
       {result && (
         <div className="space-y-6">
-          <MapPreview
-            gpxTrack={result.gpxTrack}
-            generatedTrack={result.generatedTrack}
-          />
+          <Suspense fallback={<div className="h-64 md:h-96 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />}>
+            <MapPreview
+              gpxTrack={result.gpxTrack}
+              generatedTrack={result.generatedTrack}
+            />
+          </Suspense>
           <TrackStats stats={result.stats} />
           <DownloadButton />
         </div>
