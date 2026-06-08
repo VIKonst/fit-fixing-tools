@@ -17,8 +17,10 @@ A client-side React app — no server required. Users upload a FIT file and a GP
 ```
 cd web
 npm install
-npm run dev      # Vite dev server on http://localhost:5173
-npm run build    # TypeScript check + production build → web/dist/
+npm run dev        # Vite dev server on http://localhost:5173
+npm run build      # TypeScript check + production build → web/dist/
+npm test           # Run unit tests once (Vitest)
+npm run test:watch # Re-run tests on file change
 ```
 
 ### Tech Stack
@@ -63,6 +65,18 @@ npm run build    # TypeScript check + production build → web/dist/
 - **`src/i18n/`** — i18next setup with `en.json` and `uk.json` translation files (~30 keys each)
 
 - **`src/types/garmin-fitsdk.d.ts`** — TypeScript declarations for `@garmin/fitsdk` (no `@types` package exists)
+
+### Testing
+
+Framework: **Vitest** (`vitest.config.ts` at `web/`). Tests live in `src/lib/__tests__/` alongside the modules they cover. Only business logic is tested — no UI components.
+
+| Test file | Covers |
+|---|---|
+| `geo.test.ts` | `degreesToSemicircles`, `semicirclesToDegrees`, `toRadians`, `haversineDistance`, `lerp` |
+| `gpx-parser.test.ts` | `parseGpx` (trkpt/rtept parsing, elevation, NaN skipping, fallback), `buildTrackWithDistances` |
+| `fit-processor.test.ts` | `injectGpsFromGpx` (GPS injection, key insertion order, interpolation edges, session/lap positions, stats), `decodeFit` (error paths via mocked SDK), `encodeFit` (message ordering, timestamp sort) |
+
+`@garmin/fitsdk` is mocked at module level in `fit-processor.test.ts` — no real FIT binary data needed. `injectGpsFromGpx` is tested with plain TypeScript objects and requires no mock.
 
 ### Known Issues & Design Decisions
 

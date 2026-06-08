@@ -28,6 +28,16 @@ npm run dev
 
 Open http://localhost:5173 in your browser.
 
+### Testing
+
+```bash
+cd web
+npm test           # run unit tests once
+npm run test:watch # re-run on file change
+```
+
+Unit tests cover the core business logic (`geo`, `gpx-parser`, `fit-processor`) using [Vitest](https://vitest.dev/).
+
 ### Production Build
 
 ```bash
