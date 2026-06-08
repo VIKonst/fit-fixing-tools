@@ -1,6 +1,10 @@
 import { haversineDistance } from './geo';
 import type { GpxPoint, TrackPoint } from './types';
 
+// Regex-based parser intentionally avoids a DOM/XML parser so it works in both
+// browser and Web Worker contexts without environment-specific APIs.
+// GPX track points (<trkpt>) are the primary target; the regex handles both
+// self-closing tags and tags with child elements (e.g. <ele>, <time>).
 export function parseGpx(gpxContent: string): GpxPoint[] {
   const points: GpxPoint[] = [];
 
@@ -24,6 +28,9 @@ export function parseGpx(gpxContent: string): GpxPoint[] {
     }
   }
 
+  // GPX files exported from route planners (e.g. Komoot, Ride with GPS) often
+  // contain only <rtept> (route points) instead of <trkpt> (recorded track points).
+  // Fall back to route points so those files are accepted without user friction.
   if (points.length === 0) {
     const rteptRegex =
       /<rtept\s+lat="([^"]+)"\s+lon="([^"]+)"[^>]*(?:\/>|>([\s\S]*?)<\/rtept>)/gi;
@@ -39,6 +46,9 @@ export function parseGpx(gpxContent: string): GpxPoint[] {
   return points;
 }
 
+// Annotates each GPX point with its cumulative Haversine distance from the
+// start of the track. This prefix-sum lets interpolatePosition() do a single
+// binary search instead of summing segments on every FIT record lookup.
 export function buildTrackWithDistances(points: GpxPoint[]): TrackPoint[] {
   if (points.length === 0) return [];
 

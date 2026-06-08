@@ -13,6 +13,7 @@ import type {
   ProcessingStats,
 } from './types';
 
+// Use fromArrayBuffer (browser API), not fromBuffer (Node.js Buffer only).
 export function decodeFit(buffer: ArrayBuffer): FitMessages {
   const stream = Stream.fromArrayBuffer(buffer);
   const decoder = new Decoder(stream);
@@ -22,11 +23,11 @@ export function decodeFit(buffer: ArrayBuffer): FitMessages {
   }
 
   const { messages, errors } = decoder.read({
-    applyScaleAndOffset: true,
+    applyScaleAndOffset: true,   // converts raw integers to real units (e.g. distance in m, not cm)
     expandSubFields: true,
     expandComponents: true,
-    convertTypesToStrings: false,
-    convertDateTimesToDates: false,
+    convertTypesToStrings: false, // keep numeric enums so the encoder can round-trip them unchanged
+    convertDateTimesToDates: false, // keep timestamps as FIT epoch integers, not JS Date objects
     includeUnknownData: true,
     mergeHeartRates: false,
   });
@@ -38,6 +39,11 @@ export function decodeFit(buffer: ArrayBuffer): FitMessages {
   return messages;
 }
 
+// Given a distance along the GPX track, returns the interpolated lat/lon/ele
+// at that point. Uses binary search on the cumulative-distance prefix sum built
+// by buildTrackWithDistances(), then linearly interpolates within the segment.
+// Distances beyond the end of the track clamp to the last point — this handles
+// FIT activities that are longer than the supplied GPX route.
 function interpolatePosition(
   track: TrackPoint[],
   distanceMeters: number,
@@ -55,6 +61,8 @@ function interpolatePosition(
     return { lat: last.lat, lon: last.lon, ele: last.ele };
   }
 
+  // Binary search: find the last track point whose cumulative distance ≤ target.
+  // After the loop, [lo, hi] is the segment that straddles distanceMeters.
   let lo = 0;
   let hi = track.length - 1;
   while (lo < hi - 1) {
@@ -66,6 +74,7 @@ function interpolatePosition(
     }
   }
 
+  // t is how far into the [lo, hi] segment the target distance falls (0–1).
   const segLen = track[hi].cumulDist - track[lo].cumulDist;
   const t = segLen > 0 ? (distanceMeters - track[lo].cumulDist) / segLen : 0;
 
@@ -74,6 +83,7 @@ function interpolatePosition(
   return {
     lat: lerp(track[lo].lat, track[hi].lat, t),
     lon: lerp(track[lo].lon, track[hi].lon, t),
+    // Skip elevation interpolation if either endpoint lacks elevation data.
     ele: loEle != null && hiEle != null ? lerp(loEle, hiEle, t) : null,
   };
 }
@@ -181,6 +191,9 @@ export function encodeFit(messages: FitMessages): Uint8Array {
     }
   }
 
+  // Events and records must be written interleaved in timestamp order.
+  // Writing all events first then all records produces an invalid FIT file
+  // that Garmin Connect rejects.
   const events = messages.eventMesgs || [];
   const records = messages.recordMesgs || [];
   const allTimestamped = [
