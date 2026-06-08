@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@garmin/fitsdk": "^21.205.0",
+    "@vercel/analytics": "^2.0.1",
     "i18next": "^26.3.1",
     "leaflet": "^1.9.4",
     "react": "^19.2.6",
